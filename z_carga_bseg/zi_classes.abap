@@ -212,6 +212,9 @@ CLASS lcl_rfc IMPLEMENTATION.
         ENDIF.
 
       ENDLOOP.
+      me->show_log( ).
+    ELSE.
+      MESSAGE 'Nenhum registro encontrado em ZBSEG!.' TYPE 'E'.
     ENDIF.
 
   ENDMETHOD.
@@ -231,12 +234,13 @@ CLASS lcl_rfc IMPLEMENTATION.
                                   CHANGING t_table = it_log ).
         ENDIF.
 
-        lo_table->get_functions( )->set_all( abap_true ). "Ativar met codes
+        "Ativa os met codes
+        lo_table->get_functions( )->set_all( abap_true ).
 
-          "Mudar nome das colunas do ALV
-          lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_short_text( 'Msg.' ).
-          lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_medium_text( 'Mensagem' ).
-          lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_long_text( 'Mensagem' ).
+        "Mudar nome das colunas do ALV
+        lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_short_text( 'Msg.' ).
+        lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_medium_text( 'Mensagem' ).
+        lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_long_text( 'Mensagem' ).
 
         IF v_show_log_z IS NOT INITIAL.
           "Mudar nome das colunas do ALV
@@ -248,7 +252,7 @@ CLASS lcl_rfc IMPLEMENTATION.
         CREATE OBJECT lo_header.
 
         "título do header
-        lo_header->create_header_information( row = 1 column = 1 text = 'Log de dados alterados' ).
+        lo_header->create_header_information( row = 1 column = 1 text = 'Log' ).
 
         lo_header->add_row( ).
 
@@ -256,10 +260,11 @@ CLASS lcl_rfc IMPLEMENTATION.
 
         lo_table->set_top_of_list( lo_header ).
 
-        lo_columns = lo_table->get_columns( ). "Ajustar tamanho dos subtítulos
-        lo_columns->set_optimize( abap_true ). "Ajustar tamanho dos subtítulos
+        lo_columns = lo_table->get_columns( ). "Ajusta tamanho dos subtítulos
+        lo_columns->set_optimize( abap_true ). "Ajusta tamanho dos subtítulos
 
-        lo_table->display( ) . "O dispay é fundamental para a exibição do ALV
+        "Exibe o ALV
+        lo_table->display( ) .
 
       CATCH cx_salv_msg
             cx_root.
