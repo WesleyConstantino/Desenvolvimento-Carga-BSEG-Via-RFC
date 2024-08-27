@@ -14,6 +14,7 @@ CLASS lcl_rfc DEFINITION.
   PROTECTED SECTION.
     METHODS:
       popula_it_options,
+      popula_it_fields,
       append_tabela_z,
       show_log.
 
@@ -27,6 +28,8 @@ CLASS lcl_rfc DEFINITION.
     DATA: r_bseg     TYPE TABLE OF bseg,
           it_options TYPE TABLE OF rfc_db_opt,
           it_log     TYPE TABLE OF ty_log,
+          it_fields  TYPE TABLE OF rfc_db_fld,
+          wa_fields  TYPE rfc_db_fld,
           empresa    TYPE bukrs,
           periodo    TYPE gjahr.
 ENDCLASS.
@@ -41,6 +44,7 @@ CLASS lcl_rfc IMPLEMENTATION.
     me->periodo = i_periodo.
 
     me->popula_it_options( ).
+    me->popula_it_fields( ).
 
     CALL FUNCTION 'RFC_READ_TABLE' DESTINATION 'Z_ECC_PRD'
       EXPORTING
@@ -50,7 +54,7 @@ CLASS lcl_rfc IMPLEMENTATION.
         get_sorted           = 'X'
       TABLES
         options              = it_options
-*       FIELDS               =
+        fields               = it_fields
         data                 = r_bseg
       EXCEPTIONS
         table_not_available  = 1
@@ -81,17 +85,45 @@ CLASS lcl_rfc IMPLEMENTATION.
 
   ENDMETHOD.
 
+
+  "Passa os campos da BSEG que deverão ser trazidos na hora da seleção
+  METHOD popula_it_fields.
+    DATA it_fields_bseg  TYPE TABLE OF dfies.
+
+    "Recupera todos os campos da BSEG
+    CALL FUNCTION 'DDIF_FIELDINFO_GET'
+      EXPORTING
+        tabname        = 'BSEG'
+      TABLES
+        dfies_tab      = it_fields_bseg
+      EXCEPTIONS
+        not_found      = 1
+        internal_error = 2
+        OTHERS         = 3.
+
+    IF sy-subrc EQ 0.
+      "Appenda o nome de todos os campos na it_fields
+      LOOP AT it_fields_bseg INTO DATA(wa_fields_bseg).
+        wa_fields-fieldname = wa_fields_bseg-fieldname.
+        APPEND wa_fields TO it_fields.
+        CLEAR: wa_fields,
+               wa_fields_bseg.
+      ENDLOOP.
+    ENDIF.
+
+  ENDMETHOD.
+
   "Appenda os campos Z da BSEG numa tabela Z
   METHOD append_tabela_z.
 
     INSERT zbseg FROM TABLE r_bseg.
 
     IF sy-subrc = 0.
-        COMMIT WORK.
-        MESSAGE 'Dados inseridos com sucesso na tabela ZBSEG.' TYPE 'S'.
+      COMMIT WORK.
+      MESSAGE 'Dados inseridos com sucesso na tabela ZBSEG.' TYPE 'S'.
     ELSE.
-        ROLLBACK WORK.
-        MESSAGE 'Erro ao inserir dados na tabela ZBSEG.' TYPE 'E'.
+      ROLLBACK WORK.
+      MESSAGE 'Erro ao inserir dados na tabela ZBSEG.' TYPE 'E'.
     ENDIF.
 
   ENDMETHOD.
@@ -118,7 +150,7 @@ CLASS lcl_rfc IMPLEMENTATION.
         lo_table->get_columns( )->get_column( 'CAMPO1' )->set_medium_text( 'Campo 1' ).
         lo_table->get_columns( )->get_column( 'CAMPO1' )->set_long_text( 'Campo 1' ).
 
-        CREATE OBJECT lo_header. "É necessário que criemos o objeto header
+        CREATE OBJECT lo_header.
 
         "título do header
         lo_header->create_header_information( row = 1 column = 1 text = 'Log de dados alterados' ).
