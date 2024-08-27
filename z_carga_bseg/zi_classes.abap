@@ -23,15 +23,26 @@ CLASS lcl_rfc DEFINITION.
         campo1 TYPE char20,
         campo2 TYPE char20,
         campo3 TYPE char20,
-      END OF ty_log.
+      END OF ty_log,
 
-    DATA: r_bseg     TYPE TABLE OF bseg,
-          it_options TYPE TABLE OF rfc_db_opt,
-          it_log     TYPE TABLE OF ty_log,
-          it_fields  TYPE TABLE OF rfc_db_fld,
-          wa_fields  TYPE rfc_db_fld,
-          empresa    TYPE bukrs,
-          periodo    TYPE gjahr.
+      BEGIN OF ty_log_tab_z,
+        mensagem(50) TYPE c,
+        num_loop(20) TYPE c,
+      END OF ty_log_tab_z.
+
+    DATA: r_bseg       TYPE TABLE OF bseg,
+          it_options   TYPE TABLE OF rfc_db_opt,
+          it_log       TYPE TABLE OF ty_log,
+          it_log_tab_z TYPE TABLE OF ty_log_tab_z,
+          it_fields    TYPE TABLE OF rfc_db_fld,
+          wa_fields    TYPE rfc_db_fld,
+          empresa      TYPE bukrs,
+          periodo      TYPE gjahr,
+          v_count      TYPE c VALUE 200,
+          v_skip       TYPE c VALUE 0,
+          v_total      TYPE c,
+          v_num_loop   TYPE c,
+          v_show_log_z TYPE c VALUE 'X'.
 ENDCLASS.
 
 
@@ -46,32 +57,44 @@ CLASS lcl_rfc IMPLEMENTATION.
     me->popula_it_options( ).
     me->popula_it_fields( ).
 
-    CALL FUNCTION 'RFC_READ_TABLE' DESTINATION 'Z_ECC_PRD'
-      EXPORTING
-        query_table          = 'BSEG'
-*       ROWSKIPS             = 0
-*       ROWCOUNT             = 0
-        get_sorted           = 'X'
-      TABLES
-        options              = it_options
-        fields               = it_fields
-        data                 = r_bseg
-      EXCEPTIONS
-        table_not_available  = 1
-        table_without_data   = 2
-        option_not_valid     = 3
-        field_not_valid      = 4
-        not_authorized       = 5
-        data_buffer_exceeded = 6
-        OTHERS               = 7.
-    IF sy-subrc <> 0.
-      MESSAGE 'Não foi possível acessar os dados pela RFC.' TYPE 'E'.
-      EXIT.
-    ENDIF.
+    DO.
+      CLEAR r_bseg.
+      v_num_loop = v_num_loop + 1.
 
-    IF r_bseg IS NOT INITIAL.
-      me->append_tabela_z( ).
-    ENDIF.
+      CALL FUNCTION 'RFC_READ_TABLE' DESTINATION 'Z_ECC_PRD'
+        EXPORTING
+          query_table          = 'BSEG'
+          rowskips             = v_skip
+          rowcount             = v_count
+          get_sorted           = 'X'
+        TABLES
+          options              = it_options
+          fields               = it_fields
+          data                 = r_bseg
+        EXCEPTIONS
+          table_not_available  = 1
+          table_without_data   = 2
+          option_not_valid     = 3
+          field_not_valid      = 4
+          not_authorized       = 5
+          data_buffer_exceeded = 6
+          OTHERS               = 7.
+      IF sy-subrc <> 0.
+        MESSAGE 'Não foi possível acessar os dados pela RFC.' TYPE 'E'.
+        EXIT.
+      ENDIF.
+
+      IF r_bseg IS NOT INITIAL.
+        me->append_tabela_z( ).
+      ENDIF.
+
+      "Sai do loop se o número de registros retornados for menor que 200 (último lote)
+      DESCRIBE TABLE r_bseg LINES v_total.
+      IF v_total < v_count.
+        EXIT.
+      ENDIF.
+
+    ENDDO.
 
   ENDMETHOD.
 
@@ -114,21 +137,32 @@ CLASS lcl_rfc IMPLEMENTATION.
 
   "Appenda os campos Z da BSEG numa tabela Z
   METHOD append_tabela_z.
+    DATA wa_log_tab_z LIKE LINE OF it_log_tab_z.
 
     INSERT zbseg FROM TABLE r_bseg.
 
     IF sy-subrc = 0.
+      "Incrementa o número de registros a pular
+      ADD v_count TO v_skip.
+
       COMMIT WORK.
-      MESSAGE 'Dados inseridos com sucesso na tabela ZBSEG.' TYPE 'S'.
+      wa_log_tab_z-mensagem = 'Dados inseridos com sucesso na tabela ZBSEG!'.
+      wa_log_tab_z-num_loop = v_num_loop.
+      APPEND wa_log_tab_z TO it_log_tab_z.
+      CLEAR wa_log_tab_z.
     ELSE.
       ROLLBACK WORK.
-      MESSAGE 'Erro ao inserir dados na tabela ZBSEG.' TYPE 'E'.
+      wa_log_tab_z-mensagem = 'Erro ao inserir dados na tabela ZBSEG!'.
+      wa_log_tab_z-num_loop = v_num_loop.
+      APPEND wa_log_tab_z TO it_log_tab_z.
+      CLEAR wa_log_tab_z.
     ENDIF.
 
   ENDMETHOD.
 
   "Insere os dados dos campos Z na BSEG
   METHOD atualiza_bseg.
+    v_show_log_z = ' '.
 
   ENDMETHOD.
 
@@ -139,15 +173,31 @@ CLASS lcl_rfc IMPLEMENTATION.
           lo_columns TYPE REF TO cl_salv_columns_table.
 
     TRY.
-        cl_salv_table=>factory( IMPORTING r_salv_table = lo_table
-                                CHANGING t_table = it_log ).
+        IF v_show_log_z IS NOT INITIAL.
+          cl_salv_table=>factory( IMPORTING r_salv_table = lo_table
+                                  CHANGING t_table = it_log_tab_z ).
+        ELSE.
+          cl_salv_table=>factory( IMPORTING r_salv_table = lo_table
+                                  CHANGING t_table = it_log ).
+        ENDIF.
 
         lo_table->get_functions( )->set_all( abap_true ). "Ativar met codes
 
-        "Mudar nome das colunas do ALV
-        lo_table->get_columns( )->get_column( 'CAMPO1' )->set_short_text( 'Campo 1' ).
-        lo_table->get_columns( )->get_column( 'CAMPO1' )->set_medium_text( 'Campo 1' ).
-        lo_table->get_columns( )->get_column( 'CAMPO1' )->set_long_text( 'Campo 1' ).
+        IF v_show_log_z IS NOT INITIAL.
+          "Mudar nome das colunas do ALV
+          lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_short_text( 'Msg.' ).
+          lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_medium_text( 'Mensagem' ).
+          lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_long_text( 'Mensagem' ).
+
+          lo_table->get_columns( )->get_column( 'NUM_LOOP' )->set_short_text( 'Núm. Loop' ).
+          lo_table->get_columns( )->get_column( 'NUM_LOOP' )->set_medium_text( 'Número do loop' ).
+          lo_table->get_columns( )->get_column( 'NUM_LOOP' )->set_long_text( 'Número do loop' ).
+        ELSE.
+          "Mudar nome das colunas do ALV
+          lo_table->get_columns( )->get_column( 'CAMPO1' )->set_short_text( 'Campo 1' ).
+          lo_table->get_columns( )->get_column( 'CAMPO1' )->set_medium_text( 'Campo 1' ).
+          lo_table->get_columns( )->get_column( 'CAMPO1' )->set_long_text( 'Campo 1' ).
+        ENDIF.
 
         CREATE OBJECT lo_header.
 
