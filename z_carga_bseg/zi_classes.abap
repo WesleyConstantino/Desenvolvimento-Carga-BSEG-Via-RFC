@@ -62,7 +62,11 @@ CLASS lcl_rfc IMPLEMENTATION.
         OTHERS               = 7.
 
     IF sy-subrc <> 0.
+      EXIT.
+    ENDIF.
 
+    IF r_bseg IS NOT INITIAL.
+      me->append_tabela_z( ).
     ENDIF.
 
   ENDMETHOD.
@@ -79,6 +83,16 @@ CLASS lcl_rfc IMPLEMENTATION.
 
   "Appenda os campos Z da BSEG numa tabela Z
   METHOD append_tabela_z.
+
+    INSERT zbseg FROM TABLE r_bseg.
+
+    IF sy-subrc = 0.
+        COMMIT WORK.
+        MESSAGE 'Dados inseridos com sucesso na tabela ZBSEG.' TYPE 'S'.
+    ELSE.
+        ROLLBACK WORK.
+        MESSAGE 'Erro ao inserir dados na tabela ZBSEG.' TYPE 'E'.
+    ENDIF.
 
   ENDMETHOD.
 
