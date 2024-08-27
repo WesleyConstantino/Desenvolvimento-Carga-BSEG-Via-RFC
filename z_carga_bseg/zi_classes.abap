@@ -98,6 +98,8 @@ CLASS lcl_rfc IMPLEMENTATION.
 
     ENDDO.
 
+    me->show_log( ).
+
   ENDMETHOD.
 
   "Passa as os filtros da cláusula WHERE para it_options
