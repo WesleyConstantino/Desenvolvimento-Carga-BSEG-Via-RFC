@@ -106,7 +106,7 @@ CLASS lcl_rfc IMPLEMENTATION.
   METHOD popula_it_options.
     DATA wa_options TYPE rfc_db_opt.
 
-    CONCATENATE 'BUKERS =' empresa 'AND GJAHR =' periodo  INTO wa_options SEPARATED BY space.
+    CONCATENATE 'BUKRS =' empresa 'AND GJAHR =' periodo  INTO wa_options SEPARATED BY space.
     APPEND wa_options TO me->it_options.
     CLEAR wa_options.
 
