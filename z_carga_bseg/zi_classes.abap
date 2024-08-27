@@ -20,9 +20,11 @@ CLASS lcl_rfc DEFINITION.
 
     TYPES:
       BEGIN OF ty_log,
-        campo1 TYPE char20,
-        campo2 TYPE char20,
-        campo3 TYPE char20,
+        mensagem TYPE char50,
+        bukrs    TYPE bukrs,
+        belnr    TYPE belnr,
+        gjahr    TYPE gjahr,
+        buzei    TYPE buzei,
       END OF ty_log,
 
       BEGIN OF ty_log_tab_z,
@@ -162,8 +164,55 @@ CLASS lcl_rfc IMPLEMENTATION.
 
   "Insere os dados dos campos Z na BSEG
   METHOD atualiza_bseg.
+    DATA wa_log LIKE LINE OF it_log.
     v_show_log_z = ' '.
 
+    "Seleciona todos os registros da ZBSEG
+    SELECT * FROM zbseg
+      INTO TABLE @DATA(it_zbseg).
+
+    IF it_zbseg IS NOT INITIAL AND sy-subrc EQ 0.
+      "Seleciona todos os registros da BSEG
+      SELECT * FROM bseg
+       INTO TABLE @DATA(it_bseg).
+
+      LOOP AT it_zbseg INTO DATA(wa_zbseg).
+        "Verifica se o registro da linha atual de ZBSEG existe na BSEG
+        READ TABLE it_bseg WITH KEY bukrs = wa_zbseg-bukrs
+                                    belnr = wa_zbseg-belnr
+                                    gjahr = wa_zbseg-gjahr
+                                    buzei = wa_zbseg-buzei
+                    TRANSPORTING NO FIELDS.
+        IF sy-subrc EQ 0.
+          "Modifica a linha da BSEG onde as chaves forem iguais as de wa_zbseg
+          MODIFY bseg FROM wa_zbseg.
+
+          IF sy-subrc = 0.
+            COMMIT WORK.
+            wa_log-mensagem = 'Linha atualizada com sucesso na tabela BSEG!'.
+            wa_log-bukrs = wa_zbseg-bukrs.
+            wa_log-belnr = wa_zbseg-belnr.
+            wa_log-gjahr = wa_zbseg-gjahr.
+            wa_log-buzei = wa_zbseg-buzei.
+            APPEND wa_log TO it_log.
+            CLEAR wa_log.
+          ELSE.
+            ROLLBACK WORK.
+            wa_log-mensagem = 'Erro ao tentar atualizar linha na tabela BSEG!'.
+            wa_log-bukrs = wa_zbseg-bukrs.
+            wa_log-belnr = wa_zbseg-belnr.
+            wa_log-gjahr = wa_zbseg-gjahr.
+            wa_log-buzei = wa_zbseg-buzei.
+            APPEND wa_log TO it_log.
+            CLEAR wa_log.
+          ENDIF.
+
+        ELSE.
+          CONTINUE.
+        ENDIF.
+
+      ENDLOOP.
+    ENDIF.
 
   ENDMETHOD.
 
@@ -184,20 +233,16 @@ CLASS lcl_rfc IMPLEMENTATION.
 
         lo_table->get_functions( )->set_all( abap_true ). "Ativar met codes
 
-        IF v_show_log_z IS NOT INITIAL.
           "Mudar nome das colunas do ALV
           lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_short_text( 'Msg.' ).
           lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_medium_text( 'Mensagem' ).
           lo_table->get_columns( )->get_column( 'MENSAGEM' )->set_long_text( 'Mensagem' ).
 
+        IF v_show_log_z IS NOT INITIAL.
+          "Mudar nome das colunas do ALV
           lo_table->get_columns( )->get_column( 'NUM_LOOP' )->set_short_text( 'Núm. Loop' ).
           lo_table->get_columns( )->get_column( 'NUM_LOOP' )->set_medium_text( 'Número do loop' ).
           lo_table->get_columns( )->get_column( 'NUM_LOOP' )->set_long_text( 'Número do loop' ).
-        ELSE.
-          "Mudar nome das colunas do ALV
-          lo_table->get_columns( )->get_column( 'CAMPO1' )->set_short_text( 'Campo 1' ).
-          lo_table->get_columns( )->get_column( 'CAMPO1' )->set_medium_text( 'Campo 1' ).
-          lo_table->get_columns( )->get_column( 'CAMPO1' )->set_long_text( 'Campo 1' ).
         ENDIF.
 
         CREATE OBJECT lo_header.
