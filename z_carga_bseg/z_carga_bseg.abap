@@ -24,4 +24,7 @@ START-OF-SELECTION.
     CREATE OBJECT ol_rfc.
     "Chama RFC e faz seleção na BSEG
     ol_rfc->chamar_rfc( i_periodo = p_peri i_empresa = p_empr ).
+
+    "Atualiza a BSEG
+    "ol_rfc->atualiza_bseg( ).
   ENDIF.
