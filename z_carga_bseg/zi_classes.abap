@@ -64,8 +64,8 @@ CLASS lcl_rfc IMPLEMENTATION.
         not_authorized       = 5
         data_buffer_exceeded = 6
         OTHERS               = 7.
-
     IF sy-subrc <> 0.
+      MESSAGE 'Não foi possível acessar os dados pela RFC.' TYPE 'E'.
       EXIT.
     ENDIF.
 
@@ -84,7 +84,6 @@ CLASS lcl_rfc IMPLEMENTATION.
     CLEAR wa_options.
 
   ENDMETHOD.
-
 
   "Passa os campos da BSEG que deverão ser trazidos na hora da seleção
   METHOD popula_it_fields.
