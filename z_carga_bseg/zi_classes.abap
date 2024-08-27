@@ -164,6 +164,7 @@ CLASS lcl_rfc IMPLEMENTATION.
   METHOD atualiza_bseg.
     v_show_log_z = ' '.
 
+
   ENDMETHOD.
 
   "Mostra log com registros que foram alterados
