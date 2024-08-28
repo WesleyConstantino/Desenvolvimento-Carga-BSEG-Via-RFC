@@ -11,7 +11,6 @@ INCLUDE zi_classes.
 INCLUDE zi_tela.
 
 "Evento de cliques
-
 AT SELECTION-SCREEN OUTPUT.
 
   DATA ol_tela TYPE REF TO lcl_tela.
@@ -20,13 +19,14 @@ AT SELECTION-SCREEN OUTPUT.
 
 *Início da execução
 START-OF-SELECTION.
+  DATA ol_rfc TYPE REF TO lcl_rfc.
+  CREATE OBJECT ol_rfc.
+
   CASE rb_rfc.
     WHEN 'X'.
       IF p_empr IS INITIAL OR p_peri IS INITIAL.
         MESSAGE s398(00) WITH 'Preencha todos os parâmetros!' DISPLAY LIKE 'E'.
       ELSE.
-        DATA ol_rfc TYPE REF TO lcl_rfc.
-        CREATE OBJECT ol_rfc.
         "Chama RFC e faz seleção na BSEG
         ol_rfc->chamar_rfc( i_periodo = p_peri i_empresa = p_empr ).
       ENDIF.
