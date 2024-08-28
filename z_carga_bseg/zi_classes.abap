@@ -2,6 +2,7 @@
 *& Include          ZI_CLASSES
 *&---------------------------------------------------------------------*
 *Definições:
+*lcl_rfc
 CLASS lcl_rfc DEFINITION.
   PUBLIC SECTION.
     METHODS:
@@ -9,14 +10,15 @@ CLASS lcl_rfc DEFINITION.
         IMPORTING
           i_periodo TYPE  gjahr
           i_empresa TYPE  bukrs,
-      atualiza_bseg.
+      display_pop_up.
 
   PROTECTED SECTION.
     METHODS:
       popula_it_options,
       popula_it_fields,
       append_tabela_z,
-      show_log.
+      show_log,
+      atualiza_bseg.
 
     TYPES:
       BEGIN OF ty_log,
@@ -47,43 +49,45 @@ CLASS lcl_rfc DEFINITION.
           v_show_log_z TYPE c VALUE 'X'.
 ENDCLASS.
 
-
+*lcl_tela
 CLASS lcl_tela DEFINITION.
   PUBLIC SECTION.
     METHODS: modifica_tela
-    IMPORTING
-      i_rfc TYPE c
-      i_upd TYPE c.
+      IMPORTING
+        i_rfc TYPE c
+        i_upd TYPE c.
 ENDCLASS.
 
 
 *Implementações:
+*lcl_tela
 CLASS lcl_tela IMPLEMENTATION.
   "Modifica tela de seleção de acordo com os raiobuttons
   METHOD modifica_tela.
-      LOOP AT SCREEN.
-    "RFC
-    IF i_rfc EQ 'X'.
-      IF screen-group1 EQ 'RFC'.
-        screen-invisible = 0.
-        screen-input     = 1.
-        screen-active    = 1.
+    LOOP AT SCREEN.
+      "RFC
+      IF i_rfc EQ 'X'.
+        IF screen-group1 EQ 'RFC'.
+          screen-invisible = 0.
+          screen-input     = 1.
+          screen-active    = 1.
+        ENDIF.
       ENDIF.
-    ENDIF.
 
-    "UPD
-    IF i_upd EQ 'X'.
-      IF screen-group1 EQ 'RFC'.
-        screen-invisible = 1.
-        screen-input     = 0.
-        screen-active    = 0.
+      "UPD
+      IF i_upd EQ 'X'.
+        IF screen-group1 EQ 'RFC'.
+          screen-invisible = 1.
+          screen-input     = 0.
+          screen-active    = 0.
+        ENDIF.
       ENDIF.
-    ENDIF.
-    MODIFY SCREEN.
-  ENDLOOP.
+      MODIFY SCREEN.
+    ENDLOOP.
   ENDMETHOD.
 ENDCLASS.
 
+*lcl_rfc
 CLASS lcl_rfc IMPLEMENTATION.
   "Faz o select da BSEG via RFC
   METHOD chamar_rfc.
@@ -197,6 +201,31 @@ CLASS lcl_rfc IMPLEMENTATION.
       CLEAR wa_log_tab_z.
     ENDIF.
 
+  ENDMETHOD.
+
+  "Chama pop up de confirmação
+  METHOD display_pop_up.
+    DATA: lv_resposta TYPE c.
+
+    "Mostra pop up de confirmação
+    CALL FUNCTION 'POPUP_TO_CONFIRM'
+      EXPORTING
+        titlebar              = 'Confirmação'
+        text_question         = 'Essa ação poderá modificar dados da tabela BSEG, tem certeza que deseja continuar?'
+        text_button_1         = 'Sim'
+        text_button_2         = 'Não'
+        default_button        = '1'
+        display_cancel_button = 'X'
+      IMPORTING
+        answer                = lv_resposta.
+
+    IF lv_resposta = '1'.
+      "Sim
+      me->atualiza_bseg( ).
+    ELSE.
+      " Não
+      EXIT.
+    ENDIF.
   ENDMETHOD.
 
   "Insere os dados dos campos Z na BSEG
