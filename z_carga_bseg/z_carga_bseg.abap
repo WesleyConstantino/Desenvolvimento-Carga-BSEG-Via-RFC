@@ -11,6 +11,7 @@ INCLUDE zi_classes.
 INCLUDE zi_tela.
 
 "Evento de cliques
+
 AT SELECTION-SCREEN OUTPUT.
 
   DATA ol_tela TYPE REF TO lcl_tela.
@@ -31,5 +32,5 @@ START-OF-SELECTION.
       ENDIF.
     WHEN ' '.
       "Atualiza a BSEG
-      "ol_rfc->atualiza_bseg( ).
+      ol_rfc->display_pop_up( ).
   ENDCASE.
