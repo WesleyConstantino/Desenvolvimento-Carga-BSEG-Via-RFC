@@ -48,7 +48,42 @@ CLASS lcl_rfc DEFINITION.
 ENDCLASS.
 
 
+CLASS lcl_tela DEFINITION.
+  PUBLIC SECTION.
+    METHODS: modifica_tela
+    IMPORTING
+      i_rfc TYPE c
+      i_upd TYPE c.
+ENDCLASS.
+
+
 *Implementações:
+CLASS lcl_tela IMPLEMENTATION.
+  "Modifica tela de seleção de acordo com os raiobuttons
+  METHOD modifica_tela.
+      LOOP AT SCREEN.
+    "RFC
+    IF i_rfc EQ 'X'.
+      IF screen-group1 EQ 'RFC'.
+        screen-invisible = 0.
+        screen-input     = 1.
+        screen-active    = 1.
+      ENDIF.
+    ENDIF.
+
+    "UPD
+    IF i_upd EQ 'X'.
+      IF screen-group1 EQ 'RFC'.
+        screen-invisible = 1.
+        screen-input     = 0.
+        screen-active    = 0.
+      ENDIF.
+    ENDIF.
+    MODIFY SCREEN.
+  ENDLOOP.
+  ENDMETHOD.
+ENDCLASS.
+
 CLASS lcl_rfc IMPLEMENTATION.
   "Faz o select da BSEG via RFC
   METHOD chamar_rfc.
