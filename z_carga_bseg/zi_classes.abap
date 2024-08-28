@@ -216,7 +216,7 @@ CLASS lcl_rfc IMPLEMENTATION.
       ENDLOOP.
       me->show_log( ).
     ELSE.
-      MESSAGE 'Nenhum registro encontrado em ZBSEG!.' TYPE 'E'.
+      MESSAGE 'Não é possível fazer a carga na BSEG, pois nenhum registro foi encontrado na ZBSEG!.' TYPE 'E'.
     ENDIF.
 
   ENDMETHOD.
