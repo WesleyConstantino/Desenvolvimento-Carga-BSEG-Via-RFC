@@ -11,7 +11,6 @@ INCLUDE zi_classes.
 INCLUDE zi_tela.
 
 "Evento de cliques
-
 AT SELECTION-SCREEN OUTPUT.
 
   DATA ol_tela TYPE REF TO lcl_tela.
