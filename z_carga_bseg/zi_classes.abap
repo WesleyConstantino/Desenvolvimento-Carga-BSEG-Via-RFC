@@ -42,10 +42,10 @@ CLASS lcl_rfc DEFINITION.
           wa_fields    TYPE rfc_db_fld,
           empresa      TYPE bukrs,
           periodo      TYPE gjahr,
-          v_count      TYPE c VALUE 200,
-          v_skip       TYPE c VALUE 0,
-          v_total      TYPE c,
-          v_num_loop   TYPE c,
+          v_count      TYPE soid-accnt VALUE 200,
+          v_skip       TYPE soid-accnt VALUE 0,
+          v_total      TYPE soid-accnt,
+          v_num_loop   TYPE soid-accnt,
           v_show_log_z TYPE c VALUE 'X'.
 ENDCLASS.
 
@@ -169,10 +169,15 @@ CLASS lcl_rfc IMPLEMENTATION.
     IF sy-subrc EQ 0.
       "Appenda o nome de todos os campos na it_fields
       LOOP AT it_fields_bseg INTO DATA(wa_fields_bseg).
-        wa_fields-fieldname = wa_fields_bseg-fieldname.
-        APPEND wa_fields TO it_fields.
-        CLEAR: wa_fields,
-               wa_fields_bseg.
+        "Filtra apenas os campos que iniciam com Z e campos chave da BSEG para o append
+        IF wa_fields_bseg-fieldname+0(1) EQ 'Z' OR wa_fields_bseg-fieldname EQ 'BUKRS'
+        OR wa_fields_bseg-fieldname EQ 'BELNR' OR wa_fields_bseg-fieldname EQ 'GJAHR'
+        OR wa_fields_bseg-fieldname EQ 'BUZEI'.
+          wa_fields-fieldname = wa_fields_bseg-fieldname.
+          APPEND wa_fields TO it_fields.
+          CLEAR wa_fields.
+        ENDIF.
+        CLEAR wa_fields_bseg.
       ENDLOOP.
     ENDIF.
 
