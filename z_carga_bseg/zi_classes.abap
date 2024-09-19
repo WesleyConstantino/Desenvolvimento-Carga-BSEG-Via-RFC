@@ -102,7 +102,8 @@ CLASS lcl_rfc IMPLEMENTATION.
       CLEAR r_bseg.
       v_num_loop = v_num_loop + 1.
 
-      CALL FUNCTION 'RFC_READ_TABLE' DESTINATION 'Z_ECC_PRD'
+*      CALL FUNCTION 'RFC_READ_TABLE' DESTINATION 'Z_ECC_PRD'
+      CALL FUNCTION '/BODS/RFC_READ_TABLE' DESTINATION 'Z_ECC_PRD'
         EXPORTING
           query_table          = 'BSEG'
           rowskips             = v_skip
@@ -145,7 +146,9 @@ CLASS lcl_rfc IMPLEMENTATION.
   METHOD popula_it_options.
     DATA wa_options TYPE rfc_db_opt.
 
-    CONCATENATE 'BUKRS =' empresa 'AND GJAHR =' periodo  INTO wa_options SEPARATED BY space.
+    CONCATENATE 'BUKRS = ''' empresa '''' INTO wa_options.
+    APPEND wa_options TO me->it_options.
+    CONCATENATE 'AND GJAHR = ''' periodo ''''  INTO wa_options.
     APPEND wa_options TO me->it_options.
     CLEAR wa_options.
 
@@ -187,7 +190,7 @@ CLASS lcl_rfc IMPLEMENTATION.
   METHOD append_tabela_z.
     DATA wa_log_tab_z LIKE LINE OF it_log_tab_z.
 
-    INSERT zbseg FROM TABLE r_bseg.
+    MODIFY zbseg FROM TABLE r_bseg.
 
     IF sy-subrc = 0.
       "Incrementa o número de registros a pular
