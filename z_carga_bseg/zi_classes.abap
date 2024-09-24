@@ -245,7 +245,7 @@ CLASS lcl_rfc IMPLEMENTATION.
       "Appenda o nome de todos os campos na it_fields
       LOOP AT it_fields_bseg INTO DATA(wa_fields_bseg).
         "Filtra apenas os campos que iniciam com Z e campos chave da BSEG para o append
-        IF wa_fields_bseg-fieldname+0(1) EQ 'Z' OR wa_fields_bseg-fieldname EQ 'BUKRS'
+        IF wa_fields_bseg-fieldname+0(2) EQ 'ZZ' OR wa_fields_bseg-fieldname EQ 'BUKRS'
         OR wa_fields_bseg-fieldname EQ 'BELNR' OR wa_fields_bseg-fieldname EQ 'GJAHR'
         OR wa_fields_bseg-fieldname EQ 'BUZEI' OR wa_fields_bseg-fieldname EQ 'MANDT'.
           wa_fields-fieldname = wa_fields_bseg-fieldname.
