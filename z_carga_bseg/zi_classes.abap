@@ -19,7 +19,8 @@ CLASS lcl_rfc DEFINITION.
       append_tabela_z,
       show_log,
       atualiza_bseg,
-      trata_r_beseg.
+      trata_r_beseg,
+      reculpera_v_skip.
 
     TYPES:
       BEGIN OF ty_log,
@@ -93,6 +94,17 @@ ENDCLASS.
 
 *lcl_rfc
 CLASS lcl_rfc IMPLEMENTATION.
+  "Reculpera o valor de v_skip caso a execução do programa seja interrompida antes do loop acabar
+  METHOD reculpera_v_skip.
+
+    SELECT COUNT(*)
+    FROM ZBSEG
+    INTO v_skip
+      WHERE BUKRS EQ me->empresa AND
+            GJAHR EQ me->periodo.
+
+  ENDMETHOD.
+
   "Faz o tratamento da R_BSEG (dados advindos da RFC)
   METHOD trata_r_beseg.
 
@@ -156,6 +168,7 @@ CLASS lcl_rfc IMPLEMENTATION.
 
     me->popula_it_options( ).
     me->popula_it_fields( ).
+    me->reculpera_v_skip( ).
 
     DO.
       CLEAR r_bseg.
@@ -310,20 +323,81 @@ CLASS lcl_rfc IMPLEMENTATION.
       INTO TABLE @DATA(it_zbseg).
 
     IF it_zbseg IS NOT INITIAL AND sy-subrc EQ 0.
-      "Seleciona todos os registros da BSEG
-      SELECT * FROM bseg
-       INTO TABLE @DATA(it_bseg).
 
       LOOP AT it_zbseg INTO DATA(wa_zbseg).
-        "Verifica se o registro da linha atual de ZBSEG existe na BSEG
-        READ TABLE it_bseg WITH KEY bukrs = wa_zbseg-bukrs
-                                    belnr = wa_zbseg-belnr
-                                    gjahr = wa_zbseg-gjahr
-                                    buzei = wa_zbseg-buzei
-                    TRANSPORTING NO FIELDS.
-        IF sy-subrc EQ 0.
-          "Modifica a linha da BSEG onde as chaves forem iguais as de wa_zbseg
-          MODIFY bseg FROM wa_zbseg.
+
+          "Atualiza a linha da BSEG onde as chaves forem iguais as de wa_zbseg
+          UPDATE bseg
+            SET zumsk = wa_zbseg-zumsk
+                zuonr = wa_zbseg-zuonr
+                zinkz = wa_zbseg-zinkz
+                zfbdt = wa_zbseg-zfbdt
+                zterm = wa_zbseg-zterm
+                zbd1t = wa_zbseg-zbd1t
+                zbd2t = wa_zbseg-zbd2t
+                zbd3t = wa_zbseg-zbd3t
+                zbd1p = wa_zbseg-zbd1p
+                zbd2p = wa_zbseg-zbd2p
+                zlsch = wa_zbseg-zlsch
+                zlspr = wa_zbseg-zlspr
+                zbfix = wa_zbseg-zbfix
+                zollt = wa_zbseg-zollt
+                zolld = wa_zbseg-zolld
+                zekkn = wa_zbseg-zekkn
+                zzcta_corr = wa_zbseg-zzcta_corr
+                zztp_desp = wa_zbseg-zztp_desp
+                zzsegrega = wa_zbseg-zzsegrega
+                zzhisto = wa_zbseg-zzhisto
+                zztpsgt = wa_zbseg-zztpsgt
+                zzfil_risc = wa_zbseg-zzfil_risc
+                zzcorretor = wa_zbseg-zzcorretor
+                zztomador = wa_zbseg-zztomador
+                zzcongener = wa_zbseg-zzcongener
+                zzproduto = wa_zbseg-zzproduto
+                zzbusiness = wa_zbseg-zzbusiness
+                zzfonte = wa_zbseg-zzfonte
+                zznmfav = wa_zbseg-zznmfav
+                zzbanks = wa_zbseg-zzbanks
+                zzbankl = wa_zbseg-zzbankl
+                zzbankn = wa_zbseg-zzbankn
+                zzbkont = wa_zbseg-zzbkont
+                zzcgebenef = wa_zbseg-zzcgebenef
+                zzfinalted = wa_zbseg-zzfinalted
+                zzcodtrans = wa_zbseg-zzcodtrans
+                zzcgereque = wa_zbseg-zzcgereque
+                zzswiftben = wa_zbseg-zzswiftben
+                zzababenef = wa_zbseg-zzababenef
+                zzswiftint = wa_zbseg-zzswiftint
+                zzabainter = wa_zbseg-zzabainter
+                zznominter = wa_zbseg-zznominter
+                zzconinter = wa_zbseg-zzconinter
+                zzrefinvoi = wa_zbseg-zzrefinvoi
+                zzconbanco = wa_zbseg-zzconbanco
+                zzanomegps = wa_zbseg-zzanomegps
+                zznumdarf = wa_zbseg-zznumdarf
+                zzcodrecei = wa_zbseg-zzcodrecei
+                zzdttesour = wa_zbseg-zzdttesour
+                zzdtventri = wa_zbseg-zzdtventri
+                zzcodidcon = wa_zbseg-zzcodidcon
+                zzidcontri = wa_zbseg-zzidcontri
+                zzfaedt = wa_zbseg-zzfaedt
+                zzmonli = wa_zbseg-zzmonli
+                zzmonliint = wa_zbseg-zzmonliint
+                zzvlinss = wa_zbseg-zzvlinss
+                zzvlencarg = wa_zbseg-zzvlencarg
+                zzvloutra = wa_zbseg-zzvloutra
+                zzwfapini = wa_zbseg-zzwfapini
+                zzwfaprep = wa_zbseg-zzwfaprep
+                zzcomit = wa_zbseg-zzcomit
+                zzgrossit = wa_zbseg-zzgrossit
+                zzlivro = wa_zbseg-zzlivro
+                zznit = wa_zbseg-zznit
+                zzimp = wa_zbseg-zzimp
+                zzndoc = wa_zbseg-zzndoc
+          WHERE bukrs = wa_zbseg-bukrs AND
+                belnr = wa_zbseg-belnr AND
+                gjahr = wa_zbseg-gjahr AND
+                buzei = wa_zbseg-buzei.
 
           IF sy-subrc = 0.
             COMMIT WORK.
@@ -344,10 +418,6 @@ CLASS lcl_rfc IMPLEMENTATION.
             APPEND wa_log TO it_log.
             CLEAR wa_log.
           ENDIF.
-
-        ELSE.
-          CONTINUE.
-        ENDIF.
 
       ENDLOOP.
       me->show_log( ).
