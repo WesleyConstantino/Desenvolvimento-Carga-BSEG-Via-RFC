@@ -11,7 +11,7 @@ SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
   "Parâmetros da RFC
   PARAMETERS: p_empr TYPE bukrs MODIF ID rfc,
               p_peri TYPE gjahr MODIF ID rfc.
-  "Parâmetros da update
+  "Parâmetros de update
   PARAMETERS: p_empr2 TYPE bukrs MODIF ID upd,
               p_peri2 TYPE gjahr MODIF ID upd.
 SELECTION-SCREEN END OF BLOCK b1.
