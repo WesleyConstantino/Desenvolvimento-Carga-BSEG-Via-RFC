@@ -32,5 +32,5 @@ START-OF-SELECTION.
       ENDIF.
     WHEN ' '.
       "Atualiza a BSEG
-      ol_rfc->display_pop_up( ).
+      ol_rfc->display_pop_up( i_gjahr = p_peri2 i_bukrs = p_empr2 ).
   ENDCASE.
