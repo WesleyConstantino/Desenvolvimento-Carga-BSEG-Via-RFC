@@ -10,7 +10,10 @@ CLASS lcl_rfc DEFINITION.
         IMPORTING
           i_periodo TYPE  gjahr
           i_empresa TYPE  bukrs,
-      display_pop_up.
+      display_pop_up
+        IMPORTING
+          i_gjahr TYPE  gjahr
+          i_bukrs TYPE  bukrs.
 
   PROTECTED SECTION.
     METHODS:
@@ -18,7 +21,10 @@ CLASS lcl_rfc DEFINITION.
       popula_it_fields,
       append_tabela_z,
       show_log,
-      atualiza_bseg,
+      atualiza_bseg
+        IMPORTING
+          i_gjahr TYPE  gjahr
+          i_bukrs TYPE  bukrs,
       trata_r_beseg,
       reculpera_v_skip.
 
@@ -77,6 +83,12 @@ CLASS lcl_tela IMPLEMENTATION.
           screen-input     = 1.
           screen-active    = 1.
         ENDIF.
+
+        IF screen-group1 EQ 'UPD'.
+          screen-invisible = 1.
+          screen-input     = 0.
+          screen-active    = 0.
+        ENDIF.
       ENDIF.
 
       "UPD
@@ -85,6 +97,12 @@ CLASS lcl_tela IMPLEMENTATION.
           screen-invisible = 1.
           screen-input     = 0.
           screen-active    = 0.
+        ENDIF.
+
+        IF screen-group1 EQ 'UPD'.
+          screen-invisible = 0.
+          screen-input     = 1.
+          screen-active    = 1.
         ENDIF.
       ENDIF.
       MODIFY SCREEN.
@@ -98,10 +116,10 @@ CLASS lcl_rfc IMPLEMENTATION.
   METHOD reculpera_v_skip.
 
     SELECT COUNT(*)
-    FROM ZBSEG
+    FROM zbseg
     INTO v_skip
-      WHERE BUKRS EQ me->empresa AND
-            GJAHR EQ me->periodo.
+      WHERE bukrs EQ me->empresa AND
+            gjahr EQ me->periodo.
 
   ENDMETHOD.
 
@@ -306,7 +324,7 @@ CLASS lcl_rfc IMPLEMENTATION.
 
     IF lv_resposta = '1'.
       "Sim
-      me->atualiza_bseg( ).
+      me->atualiza_bseg( i_gjahr = i_gjahr i_bukrs = i_bukrs ).
     ELSE.
       " Não
       EXIT.
@@ -320,104 +338,104 @@ CLASS lcl_rfc IMPLEMENTATION.
 
     "Seleciona todos os registros da ZBSEG
     SELECT * FROM zbseg
-      INTO TABLE @DATA(it_zbseg).
+      INTO TABLE @DATA(it_zbseg)
+      WHERE bukrs EQ @i_bukrs AND
+            gjahr EQ @i_gjahr.
 
     IF it_zbseg IS NOT INITIAL AND sy-subrc EQ 0.
 
       LOOP AT it_zbseg INTO DATA(wa_zbseg).
 
-          "Atualiza a linha da BSEG onde as chaves forem iguais as de wa_zbseg
-          UPDATE bseg
-            SET zumsk = wa_zbseg-zumsk
-                zuonr = wa_zbseg-zuonr
-                zinkz = wa_zbseg-zinkz
-                zfbdt = wa_zbseg-zfbdt
-                zterm = wa_zbseg-zterm
-                zbd1t = wa_zbseg-zbd1t
-                zbd2t = wa_zbseg-zbd2t
-                zbd3t = wa_zbseg-zbd3t
-                zbd1p = wa_zbseg-zbd1p
-                zbd2p = wa_zbseg-zbd2p
-                zlsch = wa_zbseg-zlsch
-                zlspr = wa_zbseg-zlspr
-                zbfix = wa_zbseg-zbfix
-                zollt = wa_zbseg-zollt
-                zolld = wa_zbseg-zolld
-                zekkn = wa_zbseg-zekkn
-                zzcta_corr = wa_zbseg-zzcta_corr
-                zztp_desp = wa_zbseg-zztp_desp
-                zzsegrega = wa_zbseg-zzsegrega
-                zzhisto = wa_zbseg-zzhisto
-                zztpsgt = wa_zbseg-zztpsgt
-                zzfil_risc = wa_zbseg-zzfil_risc
-                zzcorretor = wa_zbseg-zzcorretor
-                zztomador = wa_zbseg-zztomador
-                zzcongener = wa_zbseg-zzcongener
-                zzproduto = wa_zbseg-zzproduto
-                zzbusiness = wa_zbseg-zzbusiness
-                zzfonte = wa_zbseg-zzfonte
-                zznmfav = wa_zbseg-zznmfav
-                zzbanks = wa_zbseg-zzbanks
-                zzbankl = wa_zbseg-zzbankl
-                zzbankn = wa_zbseg-zzbankn
-                zzbkont = wa_zbseg-zzbkont
-                zzcgebenef = wa_zbseg-zzcgebenef
-                zzfinalted = wa_zbseg-zzfinalted
-                zzcodtrans = wa_zbseg-zzcodtrans
-                zzcgereque = wa_zbseg-zzcgereque
-                zzswiftben = wa_zbseg-zzswiftben
-                zzababenef = wa_zbseg-zzababenef
-                zzswiftint = wa_zbseg-zzswiftint
-                zzabainter = wa_zbseg-zzabainter
-                zznominter = wa_zbseg-zznominter
-                zzconinter = wa_zbseg-zzconinter
-                zzrefinvoi = wa_zbseg-zzrefinvoi
-                zzconbanco = wa_zbseg-zzconbanco
-                zzanomegps = wa_zbseg-zzanomegps
-                zznumdarf = wa_zbseg-zznumdarf
-                zzcodrecei = wa_zbseg-zzcodrecei
-                zzdttesour = wa_zbseg-zzdttesour
-                zzdtventri = wa_zbseg-zzdtventri
-                zzcodidcon = wa_zbseg-zzcodidcon
-                zzidcontri = wa_zbseg-zzidcontri
-                zzfaedt = wa_zbseg-zzfaedt
-                zzmonli = wa_zbseg-zzmonli
-                zzmonliint = wa_zbseg-zzmonliint
-                zzvlinss = wa_zbseg-zzvlinss
-                zzvlencarg = wa_zbseg-zzvlencarg
-                zzvloutra = wa_zbseg-zzvloutra
-                zzwfapini = wa_zbseg-zzwfapini
-                zzwfaprep = wa_zbseg-zzwfaprep
-                zzcomit = wa_zbseg-zzcomit
-                zzgrossit = wa_zbseg-zzgrossit
-                zzlivro = wa_zbseg-zzlivro
-                zznit = wa_zbseg-zznit
-                zzimp = wa_zbseg-zzimp
-                zzndoc = wa_zbseg-zzndoc
+        "Atualiza a linha da BSEG onde as chaves forem iguais as de wa_zbseg
+        UPDATE bseg
+          SET zzcta_corr = wa_zbseg-zzcta_corr
+              zztp_desp = wa_zbseg-zztp_desp
+              zzsegrega = wa_zbseg-zzsegrega
+              zzhisto = wa_zbseg-zzhisto
+              zztpsgt = wa_zbseg-zztpsgt
+              zzfil_risc = wa_zbseg-zzfil_risc
+              zzcorretor = wa_zbseg-zzcorretor
+              zztomador = wa_zbseg-zztomador
+              zzcongener = wa_zbseg-zzcongener
+              zzproduto = wa_zbseg-zzproduto
+              zzbusiness = wa_zbseg-zzbusiness
+              zzfonte = wa_zbseg-zzfonte
+              zznmfav = wa_zbseg-zznmfav
+              zzbanks = wa_zbseg-zzbanks
+              zzbankl = wa_zbseg-zzbankl
+              zzbankn = wa_zbseg-zzbankn
+              zzbkont = wa_zbseg-zzbkont
+              zzcgebenef = wa_zbseg-zzcgebenef
+              zzfinalted = wa_zbseg-zzfinalted
+              zzcodtrans = wa_zbseg-zzcodtrans
+              zzcgereque = wa_zbseg-zzcgereque
+              zzswiftben = wa_zbseg-zzswiftben
+              zzababenef = wa_zbseg-zzababenef
+              zzswiftint = wa_zbseg-zzswiftint
+              zzabainter = wa_zbseg-zzabainter
+              zznominter = wa_zbseg-zznominter
+              zzconinter = wa_zbseg-zzconinter
+              zzrefinvoi = wa_zbseg-zzrefinvoi
+              zzconbanco = wa_zbseg-zzconbanco
+              zzanomegps = wa_zbseg-zzanomegps
+              zznumdarf = wa_zbseg-zznumdarf
+              zzcodrecei = wa_zbseg-zzcodrecei
+              zzdttesour = wa_zbseg-zzdttesour
+              zzdtventri = wa_zbseg-zzdtventri
+              zzcodidcon = wa_zbseg-zzcodidcon
+              zzidcontri = wa_zbseg-zzidcontri
+              zzfaedt = wa_zbseg-zzfaedt
+              zzmonli = wa_zbseg-zzmonli
+              zzmonliint = wa_zbseg-zzmonliint
+              zzvlinss = wa_zbseg-zzvlinss
+              zzvlencarg = wa_zbseg-zzvlencarg
+              zzvloutra = wa_zbseg-zzvloutra
+              zzwfapini = wa_zbseg-zzwfapini
+              zzwfaprep = wa_zbseg-zzwfaprep
+              zzcomit = wa_zbseg-zzcomit
+              zzgrossit = wa_zbseg-zzgrossit
+              zzlivro = wa_zbseg-zzlivro
+              zznit = wa_zbseg-zznit
+              zzimp = wa_zbseg-zzimp
+              zzndoc = wa_zbseg-zzndoc
+        WHERE bukrs = wa_zbseg-bukrs AND
+              belnr = wa_zbseg-belnr AND
+              gjahr = wa_zbseg-gjahr AND
+              buzei = wa_zbseg-buzei.
+
+        IF sy-subrc = 0.
+          COMMIT WORK.
+          wa_log-mensagem = 'Linha atualizada com sucesso na tabela BSEG!'.
+          wa_log-bukrs = wa_zbseg-bukrs.
+          wa_log-belnr = wa_zbseg-belnr.
+          wa_log-gjahr = wa_zbseg-gjahr.
+          wa_log-buzei = wa_zbseg-buzei.
+          APPEND wa_log TO it_log.
+          CLEAR wa_log.
+
+          "Deleta a linha da ZBSEG que foi realizado o update na BSEG
+          DELETE FROM zbseg
           WHERE bukrs = wa_zbseg-bukrs AND
                 belnr = wa_zbseg-belnr AND
                 gjahr = wa_zbseg-gjahr AND
                 buzei = wa_zbseg-buzei.
 
-          IF sy-subrc = 0.
+          IF sy-subrc EQ 0.
             COMMIT WORK.
-            wa_log-mensagem = 'Linha atualizada com sucesso na tabela BSEG!'.
-            wa_log-bukrs = wa_zbseg-bukrs.
-            wa_log-belnr = wa_zbseg-belnr.
-            wa_log-gjahr = wa_zbseg-gjahr.
-            wa_log-buzei = wa_zbseg-buzei.
-            APPEND wa_log TO it_log.
-            CLEAR wa_log.
           ELSE.
             ROLLBACK WORK.
-            wa_log-mensagem = 'Erro ao tentar atualizar linha na tabela BSEG!'.
-            wa_log-bukrs = wa_zbseg-bukrs.
-            wa_log-belnr = wa_zbseg-belnr.
-            wa_log-gjahr = wa_zbseg-gjahr.
-            wa_log-buzei = wa_zbseg-buzei.
-            APPEND wa_log TO it_log.
-            CLEAR wa_log.
           ENDIF.
+
+        ELSE.
+          ROLLBACK WORK.
+          wa_log-mensagem = 'Erro ao tentar atualizar linha na tabela BSEG!'.
+          wa_log-bukrs = wa_zbseg-bukrs.
+          wa_log-belnr = wa_zbseg-belnr.
+          wa_log-gjahr = wa_zbseg-gjahr.
+          wa_log-buzei = wa_zbseg-buzei.
+          APPEND wa_log TO it_log.
+          CLEAR wa_log.
+        ENDIF.
 
       ENDLOOP.
       me->show_log( ).
